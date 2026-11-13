@@ -2,10 +2,11 @@ import React from "react";
 import { AbsoluteFill, Sequence, interpolate, spring, useCurrentFrame, useVideoConfig, Easing } from "remotion";
 
 export type Chunk = [number, number, string]; // [start s, end s, html] — время уже по смонтированному ролику
-export type Headline = { main: string; accent?: string; tail?: string; color?: "bordeaux" | "green"; until: number };
+export type Headline = { main: string; accent?: string; tail?: string; color?: "bordeaux" | "chocolate"; until: number };
 export type OverlayProps = { headline: Headline; chunks: Chunk[]; durationInFrames: number };
 
-const ACC = { bordeaux: "#6E1F2F", green: "#3E4A2C" };
+// палитра «Тёплый кабинет» (утв. 14.11.2026)
+const ACC = { bordeaux: "#6B2430", chocolate: "#3E2A24" };
 const shadow = "0 3px 24px rgba(0,0,0,.22)";
 const easeOut = Easing.bezier(0.16, 1, 0.3, 1);
 
@@ -48,8 +49,8 @@ const SubtitleLayer: React.FC<{ html: string }> = ({ html }) => {
   const s = spring({ frame: f, fps, config: { damping: 14, stiffness: 220, mass: 0.6 } });
   return (
     <div style={{ position: "absolute", top: 1400, left: 0, right: 0, textAlign: "center", whiteSpace: "nowrap" }}>
-      <span className="sub" style={{ display: "inline-block", background: "rgba(110,106,78,.85)", padding: "14px 34px 18px", borderRadius: 30,
-        font: "66px/1.15 Stolzl", color: "#fff", opacity: Math.min(1, s * 1.4), transform: `translateY(${(1 - s) * 26}px) scale(${0.86 + 0.14 * s})` }}
+      <span className="sub" style={{ display: "inline-block", background: "rgba(107,36,48,.9)", padding: "14px 34px 18px", borderRadius: 30,
+        font: "66px/1.15 Stolzl", color: "#F2ECE0", opacity: Math.min(1, s * 1.4), transform: `translateY(${(1 - s) * 26}px) scale(${0.86 + 0.14 * s})` }}
         dangerouslySetInnerHTML={{ __html: html }} />
     </div>
   );
@@ -59,7 +60,7 @@ export const Overlay: React.FC<OverlayProps> = ({ headline, chunks }) => {
   const { fps } = useVideoConfig();
   return (
     <AbsoluteFill style={{ backgroundColor: "transparent" }}>
-      <style>{`.sub b{font:96px/0.6 PeachCream;font-weight:normal;padding:0 4px;position:relative;top:6px}.sub i{font-style:normal;color:#F5DE9A}`}</style>
+      <style>{`.sub b{font:96px/0.6 PeachCream;font-weight:normal;padding:0 4px;position:relative;top:6px;color:#E5A0B2}.sub i{font-style:normal;color:#F2D27A}`}</style>
       {chunks.map(([s, e, html], i) => (
         <Sequence key={i} from={Math.round(s * fps)} durationInFrames={Math.max(1, Math.round((e - s) * fps))} layout="none">
           <SubtitleLayer html={html} />
