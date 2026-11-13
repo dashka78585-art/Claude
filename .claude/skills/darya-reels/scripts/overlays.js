@@ -5,7 +5,8 @@ const fs = require('fs'), path = require('path');
 const [proj, fontsDir, outDir] = process.argv.slice(2);
 const P = JSON.parse(fs.readFileSync(proj));
 const tpl = fs.readFileSync(path.join(__dirname, '../templates/overlay.html'), 'utf8')
-  .replace(/FONTS_DIR/g, 'file://' + path.resolve(fontsDir));
+  .replace(/FONTS_DIR/g, 'file://' + path.resolve(fontsDir))
+  .replace(/SKILL_FONTS/g, 'file://' + path.resolve(__dirname, '../fonts'));
 fs.mkdirSync(outDir, {recursive: true});
 const tmp = path.join(outDir, '_overlay.html'); fs.writeFileSync(tmp, tpl);
 (async () => {
@@ -15,7 +16,10 @@ const tmp = path.join(outDir, '_overlay.html'); fs.writeFileSync(tmp, tpl);
   await p.evaluate(() => document.fonts.ready);
   await p.evaluate(h => {
     const el = document.getElementById('head');
-    el.querySelector('.t').innerHTML = h.line1; el.querySelector('.a').innerHTML = h.line2;
+    el.className = h.color || 'bordeaux';                 // 'bordeaux' | 'green'
+    el.querySelector('.main').innerHTML = h.main;          // строки через <br>
+    el.querySelector('.acc').innerHTML = h.accent || '';   // одно слово рукописью, без заглавных/аббревиатур
+    el.querySelector('.tail').innerHTML = h.tail || '';    // мелкая строка (аббревиатуры, «в Reels» и т.п.)
     el.style.display = 'block';
   }, P.headline);
   await p.waitForTimeout(300);

@@ -1,8 +1,10 @@
 {
  "src": "in/video.mov",
  "headline": {
-  "line1": "Мне муж не даст",
-  "line2": "бросить <span class=\"g\">ГВ</span>",
+  "main": "Мне муж<br>не даст",
+  "accent": "бросить",
+  "tail": "ГВ",
+  "color": "bordeaux",
   "until": 2.3
  },
  "cuts": [
