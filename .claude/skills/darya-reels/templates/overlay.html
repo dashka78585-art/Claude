@@ -1,6 +1,9 @@
-<!doctype html><html><head><meta charset="utf-8"><style>
-@font-face{font-family:PC;src:url(fonts/private/Peach_Cream.otf)}
-@font-face{font-family:ST;src:url(fonts/private/stolzl_regular.otf)}
+<!doctype html>
+<!-- Шаблон слоёв: заголовок + субтитр-плашка. FONTS_DIR подставляет overlays.js.
+     <b>…</b> — рукопись Peach Cream (чувства), <i>…</i> — жёлтый (вывод врача), <span class="g"> — аббревиатуры в заголовке. -->
+<html><head><meta charset="utf-8"><style>
+@font-face{font-family:PC;src:url(FONTS_DIR/Peach_Cream.otf)}
+@font-face{font-family:ST;src:url(FONTS_DIR/stolzl_regular.otf)}
 *{margin:0;box-sizing:border-box}
 html,body{width:1080px;height:1920px;background:transparent;overflow:hidden;color:#fff}
 #head{position:absolute;top:190px;left:50px;right:50px;text-align:center;display:none;text-shadow:0 2px 18px rgba(0,0,0,.18)}
@@ -12,5 +15,5 @@ html,body{width:1080px;height:1920px;background:transparent;overflow:hidden;colo
 #sub b{font:96px/0.6 PC;font-weight:normal;padding:0 4px;position:relative;top:6px}
 #sub i{font-style:normal;color:#F5DE9A}
 </style></head><body>
-<div id="head"><div class="t">Мне муж не даст</div><div class="a">бросить <span class="g">ГВ</span></div></div>
+<div id="head"><div class="t"></div><div class="a"></div></div>
 <div id="sub"></div></body></html>
