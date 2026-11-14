@@ -1,9 +1,10 @@
 import React from "react";
 import { AbsoluteFill, Sequence, interpolate, spring, useCurrentFrame, useVideoConfig, Easing } from "remotion";
+import { Insert, InsertLayer } from "./Inserts";
 
 export type Chunk = [number, number, string]; // [start s, end s, html] — время уже по смонтированному ролику
 export type Headline = { main: string; accent?: string; tail?: string; color?: "bordeaux" | "chocolate"; until: number };
-export type OverlayProps = { headline: Headline; chunks: Chunk[]; durationInFrames: number };
+export type OverlayProps = { headline: Headline; chunks: Chunk[]; inserts?: (Insert & { hideSubs?: boolean })[]; durationInFrames: number };
 
 // палитра «Тёплый кабинет» (утв. 14.11.2026)
 const ACC = { bordeaux: "#6B2430", chocolate: "#3E2A24" };
@@ -56,12 +57,18 @@ const SubtitleLayer: React.FC<{ html: string }> = ({ html }) => {
   );
 };
 
-export const Overlay: React.FC<OverlayProps> = ({ headline, chunks }) => {
+export const Overlay: React.FC<OverlayProps> = ({ headline, chunks, inserts = [] }) => {
   const { fps } = useVideoConfig();
+  const hidden = (s: number) => inserts.some((x) => x.hideSubs && s >= x.start - 0.05 && s < x.end);
   return (
     <AbsoluteFill style={{ backgroundColor: "transparent" }}>
-      <style>{`.sub b{font:96px/0.6 PeachCream;font-weight:normal;padding:0 4px;position:relative;top:6px;color:#E5A0B2}.sub i{font-style:normal;color:#F2D27A}`}</style>
-      {chunks.map(([s, e, html], i) => (
+      <style>{`.sub b{font:96px/0.6 PeachCream;font-weight:normal;padding:0 4px;position:relative;top:6px;color:#E5A0B2}.sub i{font-style:normal;color:#F2D27A}.sub em{font-style:normal;color:#E5A0B2}`}</style>
+      {inserts.map((ins, i) => (
+        <Sequence key={"ins" + i} from={Math.round(ins.start * fps)} durationInFrames={Math.max(1, Math.round((ins.end - ins.start) * fps))} layout="none">
+          <InsertLayer ins={ins} />
+        </Sequence>
+      ))}
+      {chunks.filter(([s]) => !hidden(s)).map(([s, e, html], i) => (
         <Sequence key={i} from={Math.round(s * fps)} durationInFrames={Math.max(1, Math.round((e - s) * fps))} layout="none">
           <SubtitleLayer html={html} />
         </Sequence>

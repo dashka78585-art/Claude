@@ -8,4 +8,4 @@ if [ "$TRC" = "arib-std-b67" ]; then
 else
   VF="scale=$WD:-1"
 fi
-ffmpeg -v error -y -ss "$T" -i "$V" -frames:v 1 -vf "$VF" "$OUT"
+ffmpeg -nostdin -v error -y -ss "$T" -i "$V" -frames:v 1 -vf "$VF" "$OUT"

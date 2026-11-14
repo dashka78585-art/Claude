@@ -44,7 +44,7 @@ if '--props-out' in sys.argv:
     props = {'headline': dict(P['headline'], until=o2n(P['headline']['until'])),
              'chunks': [[o2n(s), o2n(ch[i + 1][0]) if i + 1 < len(ch) else len(keep) / FPS, h]
                         for i, (s, h) in enumerate(ch) if s < end_o],
-             'inserts': [dict(x, start=o2n(x['start']), end=o2n(x['end'])) for x in P.get('inserts', [])],
+             'inserts': [dict(x, start=o2n(x['start']), end=o2n(x['end']), beats=[o2n(b) for b in x.get('beats', [])]) for x in P.get('inserts', [])],
              'durationInFrames': len(keep)}
     json.dump(props, open(sys.argv[sys.argv.index('--props-out') + 1], 'w'), ensure_ascii=False, indent=1)
     print(f"props: {len(props['chunks'])} фрагментов, {len(keep)} кадров"); sys.exit(0)
