@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__TITLE__</title>
+<style>
+:root{--bg:#F6F3EE;--ink:#2E2A26;--muted:#7a736b;--acc:#6E6A4E;--card:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1d1c1a;--ink:#f3efe8;--muted:#a59e95;--acc:#a9a37c;--card:#2a2826}}
+:root[data-theme="dark"]{--bg:#1d1c1a;--ink:#f3efe8;--muted:#a59e95;--acc:#a9a37c;--card:#2a2826}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,system-ui,sans-serif;padding:24px 16px}
+main{max-width:480px;margin:0 auto}h1{font-size:22px;margin:0 0 4px}p{color:var(--muted);margin:0 0 18px}
+video{width:100%;max-height:60vh;border-radius:16px;background:#000;display:none;margin-bottom:16px}
+button{width:100%;padding:16px;border:0;border-radius:14px;background:var(--acc);color:#fff;font-size:17px;font-weight:600}
+button:disabled{opacity:.5}#st{margin-top:12px;color:var(--muted);font-size:14px;min-height:1.5em}
+</style></head><body><main>
+<h1>__TITLE__</h1>
+<p>Нажмите кнопку, затем в меню выберите «Сохранить видео».</p>
+<video id="v" controls playsinline></video>
+<button id="b" disabled>Загружаю видео…</button>
+<div id="st"></div>
+</main><script>
+const N=__N__;let blob=null;const b=document.getElementById('b'),st=document.getElementById('st');
+(async()=>{try{const bufs=[];for(let i=0;i<N;i++){st.textContent='Загрузка '+Math.round(i/N*100)+'%';const r=await fetch('part'+i+'.mp4');if(!r.ok)throw new Error(r.status);bufs.push(await r.arrayBuffer());}
+blob=new Blob(bufs,{type:'video/mp4'});st.textContent='Видео загружено ('+(blob.size/1048576).toFixed(0)+' МБ)';
+const v=document.getElementById('v');v.src=URL.createObjectURL(blob);v.style.display='block';
+const d=await claude.use('downloads');if(!d){b.textContent='Сохранение недоступно здесь';st.textContent='Откройте эту страницу в приложении Claude или на claude.ai';return;}
+b.disabled=false;b.textContent='Сохранить видео';
+b.onclick=async()=>{b.disabled=true;try{await d.save({filename:'__NAME__',data:blob});st.textContent='Готово';}catch(e){st.textContent=e&&e.code==='declined'?'Сохранение отменено':'Не получилось: '+(e&&e.code||e);}b.disabled=false;};
+}catch(e){st.textContent='Ошибка загрузки: '+e.message;b.textContent='Ошибка';}})();
+</script></body></html>
