@@ -142,11 +142,27 @@ subprocess.run(['ffmpeg', '-v', 'error', '-y', '-i', SRC, '-filter_complex', af,
 
 # ---------- кадры ----------
 x265p = f'colorprim={PRIM}:transfer={TRC}:colormatrix={MAT}:range=limited:log-level=error'
+# Dolby Vision (айфон снимает профиль 8.4): переносим RPU исходника на оставленные кадры, иначе на телефоне цвет «плывёт»
+DOVI = 'DOVI configuration record' in subprocess.run(['ffprobe', '-v', 'error', '-select_streams', 'v:0', '-show_entries',
+       'stream_side_data=side_data_type', '-of', 'csv=p=0', SRC], capture_output=True, text=True).stdout
+ENC_OUT = OUT
+if DOVI:
+    import os
+    HEVC = OUT + '.src.hevc'; RPU = OUT + '.rpu.bin'; KEEP = OUT + '.keep.json'
+    subprocess.run(['ffmpeg', '-nostdin', '-v', 'error', '-y', '-i', SRC, '-c:v', 'copy', '-bsf:v', 'hevc_mp4toannexb', '-f', 'hevc', HEVC], check=True)
+    json.dump(keep, open(KEEP, 'w'))
+    subprocess.run(['python3', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dovi_rpu.py'), HEVC, KEEP, RPU], check=True)
+    x265p += ':bframes=0'      # порядок кадров = порядок показа, чтобы вставить RPU по одному на кадр
+    ENC_OUT = OUT + '.dv.hevc'
 dec = subprocess.Popen(['ffmpeg', '-v', 'quiet', '-i', SRC, '-f', 'rawvideo', '-pix_fmt', 'yuv420p10le', '-'], stdout=subprocess.PIPE)
-enc = subprocess.Popen(['ffmpeg', '-v', 'error', '-y', '-f', 'rawvideo', '-pix_fmt', 'yuv420p10le', '-s', f'{W}x{H}', '-r', f'{num}/{den}', '-i', '-',
-    '-i', AUD, '-map', '0:v', '-map', '1:a', '-c:v', 'libx265', '-preset', 'medium', '-crf', '20', '-pix_fmt', 'yuv420p10le', '-tag:v', 'hvc1',
-    '-color_primaries', PRIM, '-color_trc', TRC, '-colorspace', MAT, '-color_range', 'tv', '-x265-params', x265p,
-    '-c:a', 'copy', '-movflags', '+faststart', OUT], stdin=subprocess.PIPE)
+common = ['-c:v', 'libx265', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p10le',
+          '-color_primaries', PRIM, '-color_trc', TRC, '-colorspace', MAT, '-color_range', 'tv', '-x265-params', x265p]
+if DOVI:   # сырой HEVC с RPU, потом упаковка MP4Box с записью Dolby Vision в контейнер
+    enc = subprocess.Popen(['ffmpeg', '-v', 'error', '-y', '-f', 'rawvideo', '-pix_fmt', 'yuv420p10le', '-s', f'{W}x{H}', '-r', f'{num}/{den}', '-i', '-',
+        *common, '-f', 'hevc', ENC_OUT], stdin=subprocess.PIPE)
+else:
+    enc = subprocess.Popen(['ffmpeg', '-v', 'error', '-y', '-f', 'rawvideo', '-pix_fmt', 'yuv420p10le', '-s', f'{W}x{H}', '-r', f'{num}/{den}', '-i', '-',
+        '-i', AUD, '-map', '0:v', '-map', '1:a', *common, '-tag:v', 'hvc1', '-c:a', 'copy', '-movflags', '+faststart', OUT], stdin=subprocess.PIPE)
 FS = W * H * 3; ANIM = 4; n = 0; zs = []
 last = keep[-1]
 for i in range(NSRC):
@@ -171,5 +187,10 @@ for i in range(NSRC):
             break
     enc.stdin.write(np.concatenate([np.clip(x, 0, 1023).astype(np.uint16).ravel() for x in pl]).tobytes()); n += 1
 enc.stdin.close(); enc.wait(); dec.terminate()
+if DOVI:
+    subprocess.run(['python3', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dovi_rpu.py'), '--inject', ENC_OUT, RPU, ENC_OUT + '.inj'], check=True)
+    os.replace(ENC_OUT + '.inj', ENC_OUT)
+    subprocess.run(['MP4Box', '-quiet', '-add', f'{ENC_OUT}:dvp=8.4:fps={num}/{den}', '-add', AUD, '-new', OUT], check=True)
+    subprocess.run(['rm', '-f', HEVC, RPU, KEEP, ENC_OUT])
 subprocess.run(['rm', '-f', AUD])
-print(f'кадров {n}, длительность {n / FPS:.2f} с (было {NSRC / FPS:.2f}), HDR: {HLG}, зум {min(zs):.2f}–{max(zs):.2f}')
+print(f'кадров {n}, длительность {n / FPS:.2f} с (было {NSRC / FPS:.2f}), HDR: {HLG}, Dolby Vision: {DOVI}, зум {min(zs):.2f}–{max(zs):.2f}')
